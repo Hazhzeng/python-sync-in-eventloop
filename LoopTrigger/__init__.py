@@ -8,12 +8,11 @@ from time import time
 from requests import get, Response
 
 
-async def invoke_get_request(executor: concurrent.futures.Executor,
-                             eventloop: asyncio.AbstractEventLoop) -> Response:
+async def invoke_get_request(eventloop: asyncio.AbstractEventLoop) -> Response:
     single_starttime = time()
     # Wrap synchronous call in executor
     single_result = await eventloop.run_in_executor(
-        executor,  # using the default executor
+        None,  # using the default executor
         get,  # each task call invoke_get_request
         'https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-python'  # argument needs to parse into the invoke_get_request
     )
@@ -30,14 +29,13 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
 
 
     starttime = time()
-    # Creating your own threadpool with 10 threads and use the current eventloop
-    threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=10)
+    # Use the current eventloop
     eventloop = asyncio.get_event_loop()
 
     # Create 10 tasks for synchronous call
     tasks = [
         asyncio.create_task(
-            invoke_get_request(threadpool, eventloop)
+            invoke_get_request(eventloop)
         ) for _ in range(10)
     ]
     done_tasks, pending = await asyncio.wait(tasks)
@@ -50,10 +48,8 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # Result
     result = {
-        'StartTime': starttime,
-        'EndTime': endtime,
-        'Duration': endtime - starttime,
         'DurationIfRunInSerial': duration_in_serial,
+        'ActualTimeElapsed': endtime - starttime,
         'Number of Response': len(done_tasks),
         'Responses': [d.result() for d in done_tasks]
     }

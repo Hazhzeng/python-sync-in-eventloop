@@ -33,10 +33,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     # Result
     result = {
-        'StartTime': starttime,
-        'EndTime': endtime,
-        'Duration': endtime - starttime,
         'DurationIfRunInSerial': duration_in_serial,
+        'ActualTimeElapsed': endtime - starttime,
         'Number of Response': len(responses),
         'Responses': responses
     }
